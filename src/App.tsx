@@ -6,53 +6,54 @@ import todosFromServer from './api/todos';
 import { useState } from 'react';
 import { Todo } from './types/Todo';
 
+function getUserById(userId: number) {
+  return usersFromServer.find(user => user.id === userId) || null;
+}
+
 export const App = () => {
   const [todos, setTodos] = useState(
     todosFromServer.map(todo => ({
       ...todo,
-      user: usersFromServer.find(user => user.id === todo.userId) || null,
+      user: getUserById(todo.userId),
     })),
   );
   const [title, setTitle] = useState('');
   const [userId, setUserId] = useState(0);
   const [changeTitleInputError, setChangeTitleInputError] = useState(false);
-  const [changeSelectInputError, setChangeSelectInputError] = useState(false);
+  const [changeSelectError, setChangeSelectError] = useState(false);
 
-  const handleTitleChange = (
+  const titleChangeEvent = (
     titleInputChangeEvent: React.ChangeEvent<HTMLInputElement>,
   ): void => {
     setChangeTitleInputError(false);
     setTitle(titleInputChangeEvent.target.value);
   };
 
-  const handleSelectChange = (
+  const selectChangeEvent = (
     userSelectChangeEvent: React.ChangeEvent<HTMLSelectElement>,
   ): void => {
-    setChangeSelectInputError(false);
+    setChangeSelectError(false);
     setUserId(+userSelectChangeEvent.target.value);
   };
 
-  const handleSubmit = (
+  const submitEvent = (
     formSubmitEvent: React.FormEvent<HTMLFormElement>,
   ): void => {
     formSubmitEvent.preventDefault();
 
     setChangeTitleInputError(!title);
-    setChangeSelectInputError(!userId);
+    setChangeSelectError(!userId);
 
     if (!title || !userId) {
       return;
     }
-
-    const selectedUser =
-      usersFromServer.find(user => user.id === userId) || null;
 
     const newTodo: Todo = {
       id: Math.max(...todos.map(todo => todo.id), 0) + 1,
       title: title.trim().replace(/[^A-Za-z0-9\u0400-\u04FF\s]+/gi, ''),
       completed: false,
       userId,
-      user: selectedUser,
+      user: getUserById(userId),
     };
 
     setTodos([...todos, newTodo]);
@@ -64,7 +65,7 @@ export const App = () => {
     <div className="App">
       <h1>Add todo form</h1>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={submitEvent}>
         <div className="field">
           <label htmlFor="titleId">Title:</label>
           <input
@@ -73,7 +74,7 @@ export const App = () => {
             type="text"
             data-cy="titleInput"
             placeholder="Enter title"
-            onChange={handleTitleChange}
+            onChange={titleChangeEvent}
           />
           {changeTitleInputError && (
             <span className="error">Please enter a title</span>
@@ -86,7 +87,7 @@ export const App = () => {
             id="selectUserId"
             data-cy="userSelect"
             value={userId}
-            onChange={handleSelectChange}
+            onChange={selectChangeEvent}
           >
             <option value="0" disabled>
               Choose a user
@@ -98,7 +99,7 @@ export const App = () => {
             ))}
           </select>
 
-          {changeSelectInputError && (
+          {changeSelectError && (
             <span className="error">Please choose a user</span>
           )}
         </div>
